@@ -1,12 +1,15 @@
 """LLM backends.
 
-Two providers are supported:
+Three providers are supported:
 
 * ``openai_compatible`` - any server exposing POST {base_url}/chat/completions
   with OpenAI-style tool calling (Z.ai, OpenRouter, Groq, vLLM, llama.cpp...).
 * ``ollama`` - a local Ollama daemon (POST {base_url}/api/chat).
+* ``mock`` - a built-in scripted backend that performs a small deterministic
+  demo (write a file, verify it, report). No network, no API key: useful to
+  try the agent and the Web UI offline, and for tests.
 
-Both are normalised to one internal message format:
+All are normalised to one internal message format:
 
     {"role": ..., "content": str | None,
      "tool_calls": [{"id", "name", "arguments"(str)}] | None}
@@ -31,10 +34,13 @@ class LLMClient:
     def __init__(self, config: Config):
         self.config = config
         self.session = requests.Session()
+        self._mock_step = 0
 
     # ------------------------------------------------------------------ public
     def chat(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
         """Send the conversation; return a normalised assistant message."""
+        if self.config.provider == "mock":
+            return self._chat_mock(messages, tools)
         last_error: Exception | None = None
         for attempt in range(3):
             try:
@@ -45,6 +51,64 @@ class LLMClient:
                 last_error = exc
                 time.sleep(1.5 * (attempt + 1))
         raise LLMError(f"LLM request failed after 3 attempts: {last_error}")
+
+    # -------------------------------------------------------------------- mock
+    def _chat_mock(self, messages: list[dict], tools: list[dict] | None) -> dict:
+        """Scripted demo: plan, write a file, verify it, report."""
+        if tools is None:
+            # Called by the planner (no tools attached): return a checklist.
+            return {
+                "content": (
+                    "1. Create a small demo file in the workspace\n"
+                    "2. Re-read the file to verify its contents\n"
+                    "3. Report what was done"
+                ),
+                "tool_calls": None,
+            }
+
+        if not any(m.get("role") == "tool" for m in messages):
+            self._mock_step = 0  # fresh run: replay the demo from the start
+        self._mock_step += 1
+        if self._mock_step == 1:
+            return {
+                "content": "I will create a small demo file in the workspace first.",
+                "tool_calls": [
+                    {
+                        "id": "mock_call_1",
+                        "name": "write_file",
+                        "arguments": json.dumps(
+                            {
+                                "path": "aether-demo.txt",
+                                "content": (
+                                    "Hello from Aether!\n"
+                                    "This file was written autonomously by the"
+                                    " agent loop (mock backend demo).\n"
+                                ),
+                            },
+                            indent=2,
+                        ),
+                    }
+                ],
+            }
+        if self._mock_step == 2:
+            return {
+                "content": "The file is in place; let me verify its contents.",
+                "tool_calls": [
+                    {
+                        "id": "mock_call_2",
+                        "name": "read_file",
+                        "arguments": json.dumps({"path": "aether-demo.txt"}),
+                    }
+                ],
+            }
+        return {
+            "content": (
+                "Done. I created aether-demo.txt in the workspace with a greeting, "
+                "then re-read it to verify the contents. This was the offline mock "
+                "backend - point provider/base_url at a real model for real work."
+            ),
+            "tool_calls": None,
+        }
 
     # ------------------------------------------------------- openai-compatible
     def _chat_openai(self, messages: list[dict], tools: list[dict] | None) -> dict:
