@@ -10,15 +10,16 @@ TASK -> PLAN -> [ ACT -> OBSERVE -> THINK ] x N -> RESULT
 
 - **Autonomous loop** - the agent chains tool calls on its own until the task is finished, with a configurable hard stop (`max_iterations`).
 - **Planning** - every task starts with a checklist the agent follows and adapts (disable with `--no-plan`).
-- **17 built-in tools** - shell, file read/write/edit, directory listing, Python execution, DuckDuckGo web search, URL fetching, generic HTTP calls, file downloads, Wikipedia/arXiv/GitHub search, SQLite queries, chart rendering, long-term memory (remember/recall).
-- **Any LLM backend** - any OpenAI-compatible API (Z.ai, OpenRouter, Groq, Google AI Studio, llama.cpp, vLLM...) and local Ollama. If it speaks tool-calling, Aether can drive it.
+- **19 built-in tools** - shell, file read/write/edit, directory listing, Python execution, DuckDuckGo web search, URL fetching, generic HTTP calls, file downloads, Wikipedia/arXiv/GitHub search, SQLite queries, chart rendering, long-term memory (remember/recall), email sending, calendar event files.
+- **Live Web UI** - `python -m aether.web` and watch the agent think and act in real time: plan, tool calls, observations and the final result stream into your browser as they happen.
+- **Any LLM backend** - any OpenAI-compatible API (Z.ai, OpenRouter, Groq, Google AI Studio, llama.cpp, vLLM...) and local Ollama. If it speaks tool-calling, Aether can drive it. A built-in `mock` backend runs a scripted demo with zero network access.
 - **Stuck detection** - repeating the same failed action 3 times triggers an automatic strategy-change nudge instead of an infinite loop.
 - **Long-term memory** - durable notes persist across sessions in plain Markdown under `.aether/notes.md`; every session is transcribed to JSONL for replay/audit.
 - **Safety model** - a hard blocklist that *never* runs catastrophic commands, plus a confirmation tier for impactful ones.
 
 ## Why it is free
 
-Aether is just Python and two tiny dependencies (`requests`, `PyYAML`). The cost depends entirely on the backend you plug in:
+Aether is just Python and two tiny dependencies (`requests`, `PyYAML`); the Web UI adds one more (`Flask`). The cost depends entirely on the backend you plug in:
 
 | Backend | Cost | Notes |
 | --- | --- | --- |
@@ -55,9 +56,28 @@ aether> analyze the csv in ./data and plot monthly totals
 
 REPL commands: `/reset` new conversation, `/notes` show long-term memory, `/forget` wipe notes, `/tools` list tools, `/help`, `/exit`.
 
+## Live Web UI
+
+```bash
+python -m aether.web --workspace ./demo
+# open http://127.0.0.1:5000
+```
+
+A local dashboard where you type tasks and watch the loop execute:
+
+- every step streams live over Server-Sent Events: **task → plan → thinking → tool calls with arguments → results → final answer**;
+- per-run overrides for provider, `base_url`, model and `max_iterations` (API keys stay in the server environment - never typed in the browser);
+- run history in the sidebar, click any past run to replay its full trace;
+- a **Stop** button that halts the agent before its next model turn or tool call;
+- no key at hand? pick the `mock` provider for an offline scripted demo.
+
+Optional hardening: set `AETHER_WEB_TOKEN` and every API call must present it (the UI asks for it once and stores it in `localStorage`). The server binds to `127.0.0.1` by default - it is a personal dashboard, not something to expose to the internet.
+
 ## Configuration
 
-Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_URL`, `AETHER_API_KEY`, `AETHER_MODEL`, `AETHER_MAX_ITERATIONS`, `AETHER_AUTO_APPROVE`, `AETHER_WORKSPACE`) > `config.yaml` > defaults. See `config.example.yaml`.
+Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_URL`, `AETHER_API_KEY`, `AETHER_MODEL`, `AETHER_MAX_ITERATIONS`, `AETHER_AUTO_APPROVE`, `AETHER_WORKSPACE`, `AETHER_CUSTOM_TOOLS`) > `config.yaml` > defaults. See `config.example.yaml`.
+
+For `send_email`, the SMTP settings are also environment variables: `AETHER_SMTP_HOST`, `AETHER_SMTP_PORT`, `AETHER_SMTP_USER`, `AETHER_SMTP_PASS` (use an app-specific password where offered).
 
 ## Built-in tools
 
@@ -80,8 +100,10 @@ Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_U
 | `search_github` | repo/issue/user search via the public GitHub API (no key) |
 | `run_sqlite` | one SQL statement against a local SQLite file; read-only by default |
 | `render_chart` | line/bar/scatter/pie/histogram charts saved as PNG |
+| `send_email` | SMTP email; credentials from env only; `dry_run=true` previews without sending |
+| `create_calendar_event` | writes an RFC 5545 `.ics` file into `workspace/calendar/`, importable everywhere |
 
-Everything runs keyless on `requests` alone. The one optional extra: `render_chart` uses matplotlib - `pip install matplotlib` (a clear error is returned if missing).
+Everything runs keyless on `requests` alone. Optional extras: `render_chart` uses matplotlib and the Web UI uses Flask - `pip install matplotlib flask` (a clear error is returned if missing).
 
 ## Safety model
 
@@ -104,34 +126,39 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full loop, message form
 
 ```
 aether/
-  agent.py        # the act-observe-think loop, stuck detection, REPL continuity
+  agent.py        # the act-observe-think loop, stuck detection, event stream, stop flag
   cli.py          # one-shot + interactive mode
   config.py       # YAML + env + CLI flag merging
-  llm.py          # OpenAI-compatible and Ollama backends, retries
+  llm.py          # OpenAI-compatible, Ollama and mock backends, retries
   memory.py       # session JSONL transcripts + notes.md
   planner.py      # checklist generation
+  web/            # live Web UI: Flask server, SSE streaming, run manager
   tools/          # base registry + all built-in tools
 ```
 
-## Add your own tool
+## Add your own tools
+
+The zero-code way: create a folder, drop in plain Python files, point Aether at it.
 
 ```python
-# aether/tools/my_tool.py
-from .base import Tool
+# ~/aether-tools/shout.py
+from aether.tools.base import Tool
 
-class SendEmail(Tool):
-    name = "send_email"
-    description = "Send an email via SMTP."
+class Shout(Tool):
+    name = "shout"
+    description = "Repeat a message in capital letters."
     parameters = {
         "type": "object",
-        "properties": {"to": {"type": "string"}, "body": {"type": "string"}},
-        "required": ["to", "body"],
+        "properties": {"text": {"type": "string"}},
+        "required": ["text"],
     }
     def run(self, args: dict) -> str:
-        ...  # return a short string; it goes straight back to the model
+        return args["text"].upper() + "!"
 ```
 
-Register it in `aether/tools/__init__.py` inside `build_default_tools()`. That is the whole extension contract.
+Then either `export AETHER_CUSTOM_TOOLS=~/aether-tools` or set `custom_tools_dir` in `config.yaml`. Every `*.py` file is imported at startup and every `Tool` subclass found is registered - a tool whose name collides with a built-in replaces it (handy for overrides). Broken files are skipped with a warning instead of killing the run.
+
+Alternatively register tools directly in `build_default_tools()` in `aether/tools/__init__.py`. That is the whole extension contract.
 
 ## License
 
