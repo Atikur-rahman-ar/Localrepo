@@ -14,7 +14,7 @@ except ImportError:  # pragma: no cover
 
 @dataclass
 class Config:
-    provider: str = "openai_compatible"  # "openai_compatible" | "ollama"
+    provider: str = "openai_compatible"  # "openai_compatible" | "ollama" | "mock"
     base_url: str = ""
     api_key: str = ""
     model: str = ""
@@ -25,6 +25,7 @@ class Config:
     max_tool_output: int = 8000
     memory_dir: str = ""  # defaults to <workspace>/.aether
     allow_outside_workspace: bool = False
+    custom_tools_dir: str = ""  # folder with user-defined Tool plugins (optional)
 
     def resolved_workspace(self) -> Path:
         return Path(self.workspace).expanduser().resolve()
@@ -43,6 +44,7 @@ _ENV_OVERRIDES = {
     "max_iterations": "AETHER_MAX_ITERATIONS",
     "auto_approve": "AETHER_AUTO_APPROVE",
     "workspace": "AETHER_WORKSPACE",
+    "custom_tools_dir": "AETHER_CUSTOM_TOOLS",
 }
 
 
@@ -76,12 +78,17 @@ def load_config(path: str | None = None, **overrides) -> Config:
             setattr(cfg, key, value)
 
     if not cfg.base_url:
-        cfg.base_url = (
-            "http://localhost:11434"
-            if cfg.provider == "ollama"
-            else "https://api.z.ai/api/paas/v4"
-        )
+        if cfg.provider == "ollama":
+            cfg.base_url = "http://localhost:11434"
+        elif cfg.provider == "mock":
+            cfg.base_url = "mock://local"  # never used; the backend is offline
+        else:
+            cfg.base_url = "https://api.z.ai/api/paas/v4"
     if not cfg.model:
-        cfg.model = "llama3.1" if cfg.provider == "ollama" else "glm-4.7-flash"
+        cfg.model = (
+            "llama3.1"
+            if cfg.provider == "ollama"
+            else "aether-demo" if cfg.provider == "mock" else "glm-4.7-flash"
+        )
 
     return cfg

@@ -28,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("task", nargs="*", help="task to run; omit to enter interactive mode")
     p.add_argument("--config", help="path to config.yaml")
-    p.add_argument("--provider", choices=["openai_compatible", "ollama"])
+    p.add_argument("--provider", choices=["openai_compatible", "ollama", "mock"])
     p.add_argument("--base-url", help="API root, e.g. https://api.z.ai/api/paas/v4")
     p.add_argument("--api-key")
     p.add_argument("--model")

@@ -5,4 +5,4 @@ plan, act (run commands, write code, browse the web), observe and iterate
 until the task is done.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"

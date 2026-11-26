@@ -20,3 +20,14 @@ max_iterations: 40     # hard stop for the act-observe-think loop per task
 auto_approve: false    # true = no confirmation prompts (blocklist still applies)
 workspace: .           # root directory the agent may operate in
 max_tool_output: 8000  # characters of tool output fed back to the model
+
+# Optional: folder of user-defined Tool plugins (plain *.py files, each
+# defining a Tool subclass). Also settable via AETHER_CUSTOM_TOOLS.
+custom_tools_dir: ""
+
+# The Web UI (python -m aether.web) reads the same settings. It additionally
+# uses these environment variables, which are deliberately NOT set here:
+#   AETHER_WEB_TOKEN   require a shared token on every dashboard API call
+#   AETHER_SMTP_HOST / AETHER_SMTP_PORT / AETHER_SMTP_USER / AETHER_SMTP_PASS
+#                      SMTP credentials for the send_email tool (env only,
+#                      never stored in config files)
