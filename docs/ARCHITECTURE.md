@@ -20,7 +20,7 @@
    |          |                               +------------------------+ |
    |          +-------------------------------| tools/ ToolRegistry    | |
    |        next iteration                    | shell, files, web, py, | |
-   |                                          | memory (10 built-ins)  | |
+   |                                          | memory (17 built-ins)  | |
    |                                          +------------------------+ |
    |                                                              |
    |   no tool_calls -> final answer                              |
@@ -59,6 +59,9 @@ logic never cares which backend is plugged in.
 | `tools/shell.py` | shell execution, hard blocklist, confirmation tier |
 | `tools/files.py` | workspace-sandboxed read/write/edit/list |
 | `tools/web.py` | keyless DuckDuckGo search + page fetching |
+| `tools/net.py` | generic HTTP API calls + workspace-sandboxed file downloads |
+| `tools/knowledge.py` | keyless Wikipedia, arXiv and GitHub public-API search |
+| `tools/data.py` | SQLite queries (read-only by default) + PNG chart rendering (matplotlib optional) |
 | `tools/python_exec.py` | subprocess Python execution with timeout |
 | `memory.py` | JSONL session transcripts + `notes.md` long-term memory |
 | `cli.py` | argument parsing, one-shot mode, interactive REPL |
@@ -92,3 +95,8 @@ can be expressed as a Python function returning a string can become a tool.
   sequentially, in order).
 - DuckDuckGo HTML parsing is best-effort; if their markup changes, search
   results degrade to a hint rather than crashing the loop.
+- `render_chart` needs optional `pip install matplotlib`; every other built-in
+  tool runs on the standard library plus `requests`.
+- Anonymous API quotas apply to `search_github` (~10 searches/min) and
+  occasionally to `search_wikipedia`; both return a clear retry-hint error
+  instead of crashing the loop.

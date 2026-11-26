@@ -10,7 +10,7 @@ TASK -> PLAN -> [ ACT -> OBSERVE -> THINK ] x N -> RESULT
 
 - **Autonomous loop** - the agent chains tool calls on its own until the task is finished, with a configurable hard stop (`max_iterations`).
 - **Planning** - every task starts with a checklist the agent follows and adapts (disable with `--no-plan`).
-- **10 built-in tools** - shell, file read/write/edit, directory listing, Python execution, DuckDuckGo web search, URL fetching, long-term memory (remember/recall).
+- **17 built-in tools** - shell, file read/write/edit, directory listing, Python execution, DuckDuckGo web search, URL fetching, generic HTTP calls, file downloads, Wikipedia/arXiv/GitHub search, SQLite queries, chart rendering, long-term memory (remember/recall).
 - **Any LLM backend** - any OpenAI-compatible API (Z.ai, OpenRouter, Groq, Google AI Studio, llama.cpp, vLLM...) and local Ollama. If it speaks tool-calling, Aether can drive it.
 - **Stuck detection** - repeating the same failed action 3 times triggers an automatic strategy-change nudge instead of an infinite loop.
 - **Long-term memory** - durable notes persist across sessions in plain Markdown under `.aether/notes.md`; every session is transcribed to JSONL for replay/audit.
@@ -73,6 +73,15 @@ Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_U
 | `fetch_url` | fetch a page, return readable text |
 | `remember` | write a durable fact to long-term notes |
 | `recall` | search long-term notes |
+| `http_request` | call any HTTP API: method, headers, raw or JSON body, status + body back |
+| `download_file` | download binary/text files into the workspace (200 MB cap) |
+| `search_wikipedia` | Wikipedia search with snippets; optional full article extract |
+| `search_arxiv` | paper search: titles, authors, abstracts, PDF links |
+| `search_github` | repo/issue/user search via the public GitHub API (no key) |
+| `run_sqlite` | one SQL statement against a local SQLite file; read-only by default |
+| `render_chart` | line/bar/scatter/pie/histogram charts saved as PNG |
+
+Everything runs keyless on `requests` alone. The one optional extra: `render_chart` uses matplotlib - `pip install matplotlib` (a clear error is returned if missing).
 
 ## Safety model
 

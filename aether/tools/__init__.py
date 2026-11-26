@@ -5,7 +5,10 @@ from __future__ import annotations
 from ..config import Config
 from ..memory import Memory
 from .base import Tool, ToolRegistry
+from .data import RenderChart, RunSqlite
 from .files import EditFile, ListDir, ReadFile, WriteFile
+from .knowledge import SearchArxiv, SearchGitHub, SearchWikipedia
+from .net import DownloadFile, HttpRequest
 from .python_exec import ExecutePython
 from .shell import RunCommand
 from .web import FetchURL, WebSearch
@@ -58,6 +61,13 @@ def build_default_tools(config: Config, memory: Memory) -> ToolRegistry:
     registry.register(ExecutePython(workspace))
     registry.register(WebSearch())
     registry.register(FetchURL())
+    registry.register(HttpRequest())
+    registry.register(DownloadFile(workspace, allow_outside=config.allow_outside_workspace))
+    registry.register(SearchWikipedia())
+    registry.register(SearchArxiv())
+    registry.register(SearchGitHub())
+    registry.register(RunSqlite(workspace, allow_outside=config.allow_outside_workspace))
+    registry.register(RenderChart(workspace, allow_outside=config.allow_outside_workspace))
     registry.register(RememberTool(memory))
     registry.register(RecallTool(memory))
     return registry
