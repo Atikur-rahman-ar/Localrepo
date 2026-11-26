@@ -1,0 +1,22 @@
+# Aether agent configuration.
+# Copy to config.yaml, or just use env vars / CLI flags (they override this file).
+
+# "openai_compatible" works with any OpenAI-style API:
+#   Z.ai:        https://api.z.ai/api/paas/v4
+#   OpenRouter:  https://openrouter.ai/api/v1
+#   Groq:        https://api.groq.com/openai/v1
+#   Google AI Studio (OpenAI-compat):
+#                https://generativelanguage.googleapis.com/v1beta/openai
+#   llama.cpp:   http://localhost:8080/v1
+# "ollama" talks to a local Ollama daemon (free, offline):
+#   base_url: http://localhost:11434
+provider: openai_compatible
+base_url: https://api.z.ai/api/paas/v4
+api_key: ""            # leave empty and use AETHER_API_KEY (recommended)
+model: glm-4.7-flash   # pick any tool-calling model your backend serves
+temperature: 0.7
+
+max_iterations: 40     # hard stop for the act-observe-think loop per task
+auto_approve: false    # true = no confirmation prompts (blocklist still applies)
+workspace: .           # root directory the agent may operate in
+max_tool_output: 8000  # characters of tool output fed back to the model
