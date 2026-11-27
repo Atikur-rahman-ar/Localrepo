@@ -25,6 +25,12 @@ max_tool_output: 8000  # characters of tool output fed back to the model
 # defining a Tool subclass). Also settable via AETHER_CUSTOM_TOOLS.
 custom_tools_dir: ""
 
+# Multi-agent handoffs: the delegate_task tool spawns sub-agents with fresh
+# context and their own loop budget. 0 disables delegation; N allows N levels
+# of nesting (1 = the top agent may delegate, sub-agents may not).
+max_delegate_depth: 1
+delegate_max_iterations: 15
+
 # The Web UI (python -m aether.web) reads the same settings. It additionally
 # uses these environment variables, which are deliberately NOT set here:
 #   AETHER_WEB_TOKEN   require a shared token on every dashboard API call

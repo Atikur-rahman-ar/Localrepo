@@ -26,6 +26,8 @@ class Config:
     memory_dir: str = ""  # defaults to <workspace>/.aether
     allow_outside_workspace: bool = False
     custom_tools_dir: str = ""  # folder with user-defined Tool plugins (optional)
+    max_delegate_depth: int = 1  # 0 disables delegate_task; N allows N levels of sub-agents
+    delegate_max_iterations: int = 15  # loop budget for sub-agents spawned via delegate_task
 
     def resolved_workspace(self) -> Path:
         return Path(self.workspace).expanduser().resolve()
@@ -45,6 +47,8 @@ _ENV_OVERRIDES = {
     "auto_approve": "AETHER_AUTO_APPROVE",
     "workspace": "AETHER_WORKSPACE",
     "custom_tools_dir": "AETHER_CUSTOM_TOOLS",
+    "max_delegate_depth": "AETHER_MAX_DELEGATE_DEPTH",
+    "delegate_max_iterations": "AETHER_DELEGATE_MAX_ITERATIONS",
 }
 
 

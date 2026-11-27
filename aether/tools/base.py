@@ -27,6 +27,12 @@ class Tool:
     def run(self, args: dict) -> str:  # pragma: no cover - overridden
         raise NotImplementedError
 
+    def bind_agent(self, agent) -> None:
+        """Optional hook: called by Agent.__init__ for every tool in its
+        registry. Lets tools that need agent services (stop flag, event
+        observer) receive them without the registry builder knowing about
+        the agent. Default: no-op."""
+
     def schema(self) -> dict:
         return {
             "name": self.name,

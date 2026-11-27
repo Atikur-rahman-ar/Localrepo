@@ -34,6 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--model")
     p.add_argument("--workspace", help="directory the agent operates in")
     p.add_argument("--max-iterations", type=int)
+    p.add_argument("--max-delegate-depth", type=int,
+                   help="sub-agent nesting via delegate_task (0 disables delegation)")
+    p.add_argument("--delegate-max-iterations", type=int,
+                   help="loop budget for sub-agents spawned via delegate_task")
     p.add_argument("--auto", action="store_true", help="skip confirmation prompts (blocklist still applies)")
     p.add_argument("--no-plan", action="store_true", help="skip the planning step")
     p.add_argument("--no-color", action="store_true")
@@ -51,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         model=args.model,
         workspace=args.workspace,
         max_iterations=args.max_iterations,
+        max_delegate_depth=args.max_delegate_depth,
+        delegate_max_iterations=args.delegate_max_iterations,
         auto_approve=True if args.auto else None,
     )
 

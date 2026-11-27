@@ -66,6 +66,12 @@ class Agent:
         self.on_event = on_event
         self.stop_flag = threading.Event()
 
+        # Let tools opt into agent services (stop flag, event observer).
+        # Used by delegate_task so sub-agents stream events to the same
+        # observer and stop when the parent stops.
+        for tool in registry.tools.values():
+            tool.bind_agent(self)
+
     def request_stop(self) -> None:
         """Ask the loop to halt before the next model turn / tool call."""
         self.stop_flag.set()

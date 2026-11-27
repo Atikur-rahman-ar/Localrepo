@@ -52,9 +52,15 @@ class RecallTool(Tool):
         return self.memory.recall(str(args.get("query", "")).strip())
 
 
-def build_default_tools(config: Config, memory: Memory) -> ToolRegistry:
+def build_default_tools(config: Config, memory: Memory, delegate_depth: int = 0) -> ToolRegistry:
     """Instantiate every built-in tool, then any custom tools from
-    config.custom_tools_dir (or AETHER_CUSTOM_TOOLS)."""
+    config.custom_tools_dir (or AETHER_CUSTOM_TOOLS).
+
+    ``delegate_depth`` is the nesting level of the agent this registry is
+    built for (0 = top-level). ``delegate_task`` is registered only while
+    ``delegate_depth < config.max_delegate_depth``, so sub-agents cannot
+    delegate beyond the configured limit.
+    """
     registry = ToolRegistry(max_output=config.max_tool_output)
     workspace = config.resolved_workspace()
 
@@ -77,6 +83,17 @@ def build_default_tools(config: Config, memory: Memory) -> ToolRegistry:
     registry.register(RecallTool(memory))
     registry.register(SendEmail())
     registry.register(CreateCalendarEvent(workspace))
+
+    if config.max_delegate_depth > delegate_depth:
+        from .delegate import DelegateTool
+
+        registry.register(
+            DelegateTool(
+                config,
+                memory,
+                depth=delegate_depth + 1,
+            )
+        )
 
     custom_dir = config.custom_tools_dir or os.environ.get("AETHER_CUSTOM_TOOLS", "")
     if custom_dir:

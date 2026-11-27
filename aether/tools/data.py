@@ -50,6 +50,8 @@ class RunSqlite(_WorkspaceTool):
             try:
                 cur = conn.execute(sql, params or [])
                 rows = cur.fetchmany(MAX_ROWS + 1)
+                if write:
+                    conn.commit()  # default isolation: execute() opens a txn that must be committed
             finally:
                 conn.close()
         except sqlite3.Error as exc:
