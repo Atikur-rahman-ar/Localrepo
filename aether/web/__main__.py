@@ -10,8 +10,7 @@ in the environment instead.
 from __future__ import annotations
 
 import argparse
-
-from .server import create_app
+import sys
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,8 +25,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model")
     parser.add_argument("--workspace", help="directory the agent operates in")
     parser.add_argument("--max-iterations", type=int)
+    parser.add_argument("--max-delegate-depth", type=int,
+                        help="sub-agent nesting via delegate_task (0 disables)")
+    parser.add_argument("--delegate-max-iterations", type=int)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args(argv)
+
+    try:
+        from .server import create_app
+    except ImportError:
+        print(
+            "The Web UI needs Flask. Install it with:\n"
+            "  pip install flask\n"
+            "or, if you installed Aether from PyPI:\n"
+            "  pip install 'aether-agent-framework[web]'",
+            file=sys.stderr,
+        )
+        return 1
 
     app = create_app(
         args.config,
@@ -36,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         model=args.model,
         workspace=args.workspace,
         max_iterations=args.max_iterations,
+        max_delegate_depth=args.max_delegate_depth,
+        delegate_max_iterations=args.delegate_max_iterations,
     )
     print(f"Aether Web UI on http://{args.host}:{args.port}  (Ctrl-C to quit)")
     app.run(host=args.host, port=args.port, threaded=True, debug=args.debug)

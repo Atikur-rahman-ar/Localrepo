@@ -66,6 +66,7 @@ logic never cares which backend is plugged in.
 | `tools/data.py` | SQLite queries (read-only by default) + PNG chart rendering (matplotlib optional) |
 | `tools/productivity.py` | `send_email` (SMTP, env credentials, dry-run) + `create_calendar_event` (RFC 5545 `.ics` writer) |
 | `tools/loader.py` | imports `*.py` plugins from `custom_tools_dir` and registers every `Tool` subclass found |
+| `tools/delegate.py` | `delegate_task`: spawns sub-agents with fresh context, depth/iteration caps, shared stop flag |
 | `python_exec.py` | subprocess Python execution with timeout |
 | `memory.py` | JSONL session transcripts + `notes.md` long-term memory |
 | `cli.py` | argument parsing, one-shot mode, interactive REPL |
@@ -91,6 +92,14 @@ logic never cares which backend is plugged in.
   optional callback wrapped in a bare `except`; a crashing observer or Web UI
   can never take down an agent run. The Web UI thread is also fully detached:
   a run outlives its dashboard tab and can be replayed from the event log.
+- **Sub-agents are tools, not orchestrators.** `delegate_task` is just another
+  tool the model can choose to call: the child gets a fresh conversation, a
+  smaller iteration budget (`delegate_max_iterations`) and a registry built at
+  the next depth level, so nesting is bounded by `max_delegate_depth`. The
+  parent keeps full control (stop flag is shared) and receives the child's
+  final report as an ordinary tool result. This avoids any central scheduler
+  while still guaranteeing termination: every path down the tree is strictly
+  smaller than its parent.
 
 ## Extending
 

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aether-agent-framework"
+description = "Free autonomous agent framework: plan-act-observe loop, 20 built-in tools, multi-agent handoffs, live Web UI, any OpenAI-compatible API or local Ollama model"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Atikur Rahman" }]
+keywords = ["agent", "llm", "autonomous-agent", "ai", "tools", "ollama", "openai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "requests>=2.31.0",
+    "PyYAML>=6.0.1",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+web = ["Flask>=3.0"]
+charts = ["matplotlib>=3.7"]
+dev = ["pytest>=8.0", "build>=1.2"]
+all = ["Flask>=3.0", "matplotlib>=3.7"]
+
+[project.scripts]
+aether = "aether.cli:main"
+aether-web = "aether.web.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Atikur-rahman-ar/Localrepo"
+Repository = "https://github.com/Atikur-rahman-ar/Localrepo"
+Issues = "https://github.com/Atikur-rahman-ar/Localrepo/issues"
+
+[tool.setuptools.packages.find]
+include = ["aether*"]
+
+[tool.setuptools.package-data]
+"aether.web" = ["static/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "aether.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

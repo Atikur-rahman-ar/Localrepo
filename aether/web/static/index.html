@@ -304,6 +304,28 @@ function render(ev) {
     case "loop_warning":
       addCard(`<div class="label">warning</div>${esc(ev.text)}`, "warning");
       break;
+    case "delegate_event": {
+      // A sub-agent (spawned via delegate_task) reported an event; show the
+      // most useful kinds inline, indented under the delegation.
+      const sub = ev.event || {};
+      const depth = ev.depth ?? 1;
+      if (sub.type === "assistant" && sub.text) {
+        addCard(`<div class="label">sub-agent · depth ${esc(depth)} <span class="step-no">step ${esc(sub.step ?? "")}</span></div>
+                 <div>${esc(sub.text)}</div>`, "assistant");
+      } else if (sub.type === "tool_call" && sub.name) {
+        addCard(`<div class="label">sub-agent · depth ${esc(depth)}</div>
+                 <span class="tool-name">${esc(sub.name)}</span>(…)`, "tool");
+      } else if (sub.type === "tool_result" && sub.name) {
+        const first = String(sub.result ?? "").split("\n")[0] || "(empty)";
+        addCard(`<div class="label">sub-agent · depth ${esc(depth)}</div>
+                 <span class="tool-name">→</span> <span>${esc(first.slice(0, 200))}</span>`,
+                sub.ok ? "tool result-ok" : "tool result-err");
+      } else if (sub.type === "run_end") {
+        addCard(`<div class="label">sub-agent · depth ${esc(depth)} finished</div>
+                 <div class="result-text">${esc(String(sub.result ?? "").slice(0, 400))}</div>`, "result");
+      }
+      break;
+    }
     case "run_error":
       addCard(`<div class="label">error</div>${esc(ev.message)}`, "error");
       break;
