@@ -154,7 +154,7 @@ pytest
 
 74 tests cover the config loader, memory, the tool registry, file-tool sandboxing, the custom-tool loader, the agent loop (with a scripted LLM and the offline mock backend), multi-agent delegation, the productivity tools and every Web UI endpoint - all without network access. The offline `mock` provider exists precisely so the full loop is testable anywhere.
 
-GitHub Actions runs the suite on Python 3.9-3.12 plus a build job that compiles the sdist/wheel, validates metadata with twine and smoke-tests the wheel in a clean venv (`.github/workflows/ci.yml`).
+GitHub Actions runs the suite on Python 3.10-3.12 plus a build job that compiles the sdist/wheel, validates metadata with twine and smoke-tests the wheel in a clean venv (`.github/workflows/ci.yml`).
 
 ## Safety model
 

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aether-agent-framework"
 description = "Free autonomous agent framework: plan-act-observe loop, 20 built-in tools, multi-agent handoffs, live Web UI, any OpenAI-compatible API or local Ollama model"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Atikur Rahman" }]
 keywords = ["agent", "llm", "autonomous-agent", "ai", "tools", "ollama", "openai"]
@@ -16,7 +16,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
