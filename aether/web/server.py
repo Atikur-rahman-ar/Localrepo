@@ -235,7 +235,7 @@ def create_app(config_path: str | None = None, **config_overrides) -> Flask:
 
     @app.get("/static/<path:filename>")
     def static_files(filename: str):
-        return send_from_directory(STATIC_DIR, "index.html") if False else send_from_directory(STATIC_DIR, filename)
+        return send_from_directory(STATIC_DIR, filename)
 
     # -------------------------------------------------------------------- API
     @app.get("/api/health")

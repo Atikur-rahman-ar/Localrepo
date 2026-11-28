@@ -16,6 +16,7 @@ TASK -> PLAN -> [ ACT -> OBSERVE -> THINK ] x N -> RESULT
 
 - **Autonomous loop** - the agent chains tool calls on its own until the task is finished, with a configurable hard stop (`max_iterations`).
 - **Planning** - every task starts with a checklist the agent follows and adapts (disable with `--no-plan`).
+- **One-time setup wizard** - the first run asks for the API key once, saves it to `~/.aether/config.yaml` and never asks again (re-run any time with `aether --setup`); no environment variables or manual config files needed. The `ollama` and `mock` providers stay keyless.
 - **19 built-in tools + sub-agents** - shell, file read/write/edit, directory listing, Python execution, DuckDuckGo web search, URL fetching, generic HTTP calls, file downloads, Wikipedia/arXiv/GitHub search, SQLite queries, chart rendering, long-term memory (remember/recall), email sending, calendar event files - and `delegate_task` for handing subtasks to sub-agents.
 - **Live Web UI** - `python -m aether.web` and watch the agent think and act in real time: plan, tool calls, observations and the final result stream into your browser as they happen.
 - **Multi-agent handoffs** - the agent can spawn sub-agents with fresh context and their own loop budget for self-contained subtasks; depth and iteration limits keep the tree bounded, and sub-agent activity streams into the same dashboard.
@@ -48,6 +49,15 @@ pip install "aether-agent-framework[all]"    # + charts (matplotlib) + web
 ```
 
 That installs two commands: `aether` (one-shot tasks + REPL) and `aether-web` (the dashboard).
+
+### First run - no manual key setup
+
+Run `aether` (or the dashboard) and a one-time wizard asks which provider you
+use; paste the API key once and it is stored in `~/.aether/config.yaml`
+(`C:\Users\<you>\.aether\config.yaml` on Windows). Every later run reads it
+automatically, in every project. `aether --setup` re-opens the wizard;
+`AETHER_API_KEY` and `--config config.yaml` still override it. Ollama and
+the offline mock demo never need a key.
 
 From source:
 
@@ -120,7 +130,7 @@ Defaults are deliberately conservative: depth 1 means the top-level agent may de
 
 ## Configuration
 
-Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_URL`, `AETHER_API_KEY`, `AETHER_MODEL`, `AETHER_MAX_ITERATIONS`, `AETHER_AUTO_APPROVE`, `AETHER_WORKSPACE`, `AETHER_CUSTOM_TOOLS`, `AETHER_MAX_DELEGATE_DEPTH`, `AETHER_DELEGATE_MAX_ITERATIONS`) > `config.yaml` > defaults. See `config.example.yaml`.
+Precedence: CLI flags > environment variables (`AETHER_PROVIDER`, `AETHER_BASE_URL`, `AETHER_API_KEY`, `AETHER_MODEL`, `AETHER_MAX_ITERATIONS`, `AETHER_AUTO_APPROVE`, `AETHER_WORKSPACE`, `AETHER_CUSTOM_TOOLS`, `AETHER_MAX_DELEGATE_DEPTH`, `AETHER_DELEGATE_MAX_ITERATIONS`) > `--config config.yaml` > `~/.aether/config.yaml` (per-user file written by the setup wizard) > defaults. See `config.example.yaml`.
 
 For `send_email`, the SMTP settings are also environment variables: `AETHER_SMTP_HOST`, `AETHER_SMTP_PORT`, `AETHER_SMTP_USER`, `AETHER_SMTP_PASS` (use an app-specific password where offered).
 
@@ -158,7 +168,7 @@ pip install -e ".[dev,web]"
 pytest
 ```
 
-74 tests cover the config loader, memory, the tool registry, file-tool sandboxing, the custom-tool loader, the agent loop (with a scripted LLM and the offline mock backend), multi-agent delegation, the productivity tools and every Web UI endpoint - all without network access. The offline `mock` provider exists precisely so the full loop is testable anywhere.
+87 tests cover the config loader, the per-user config store, the setup wizard, memory, the tool registry, file-tool sandboxing, the custom-tool loader, the agent loop (with a scripted LLM and the offline mock backend), multi-agent delegation, the productivity tools and every Web UI endpoint - all without network access. The offline `mock` provider exists precisely so the full loop is testable anywhere.
 
 GitHub Actions runs the suite on Python 3.10-3.12 plus a build job that compiles the sdist/wheel, validates metadata with twine and smoke-tests the wheel in a clean venv (`.github/workflows/ci.yml`).
 
@@ -188,6 +198,7 @@ aether/
   config.py       # YAML + env + CLI flag merging
   llm.py          # OpenAI-compatible, Ollama and mock backends, retries
   memory.py       # session JSONL transcripts + notes.md
+  onboarding.py   # one-time setup wizard, per-user config store
   planner.py      # checklist generation
   web/            # live Web UI: Flask server, SSE streaming, run manager
   tools/          # base registry, all built-in tools, delegate.py (sub-agents)
