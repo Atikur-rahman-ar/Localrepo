@@ -9,6 +9,7 @@ from .agent import Agent
 from .config import load_config
 from .llm import LLMClient, LLMError
 from .memory import Memory
+from .onboarding import SetupRequired, ensure_api_key
 from .tools import build_default_tools
 
 HELP = """Commands:
@@ -41,6 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--auto", action="store_true", help="skip confirmation prompts (blocklist still applies)")
     p.add_argument("--no-plan", action="store_true", help="skip the planning step")
     p.add_argument("--no-color", action="store_true")
+    p.add_argument("--setup", action="store_true",
+                   help="run the one-time setup wizard: asks for the API key once "
+                        "and saves it to ~/.aether/config.yaml")
     return p
 
 
@@ -59,6 +63,12 @@ def main(argv: list[str] | None = None) -> int:
         delegate_max_iterations=args.delegate_max_iterations,
         auto_approve=True if args.auto else None,
     )
+
+    try:
+        config = ensure_api_key(config, force=args.setup)
+    except SetupRequired as exc:
+        print(f"\n{exc}", file=sys.stderr)
+        return 1
 
     try:
         llm = LLMClient(config)

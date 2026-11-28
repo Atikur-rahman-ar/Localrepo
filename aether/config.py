@@ -1,4 +1,9 @@
-"""Configuration loading: YAML file + environment variable overrides."""
+"""Configuration loading: YAML file + environment variable overrides.
+
+Config sources, lowest to highest precedence:
+  defaults < ~/.aether/config.yaml (per-user file, written by `aether --setup`)
+           < explicit --config file < environment variables < CLI overrides
+"""
 
 from __future__ import annotations
 
@@ -52,14 +57,36 @@ _ENV_OVERRIDES = {
 }
 
 
+def user_config_path() -> Path:
+    """Per-user config file holding the result of the one-time setup wizard.
+
+    ``~/.aether/config.yaml`` (``C:\\Users\\<name>\\.aether\\config.yaml`` on
+    Windows). Read automatically when no explicit --config path is given.
+    """
+    return Path.home() / ".aether" / "config.yaml"
+
+
+def _read_yaml(path: str) -> dict:
+    if yaml is None:
+        raise RuntimeError("PyYAML is required for YAML configs: pip install pyyaml")
+    with open(path, "r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh) or {}
+
+
 def load_config(path: str | None = None, **overrides) -> Config:
-    """Merge config.yaml < environment variables < explicit overrides."""
+    """Merge config file < environment variables < explicit overrides.
+
+    With ``path=None`` the per-user file ``~/.aether/config.yaml`` is used
+    when it exists (created by ``aether --setup``); an explicit ``path``
+    always wins over it. Environment variables and *overrides* top both.
+    """
     data: dict = {}
     if path:
-        if yaml is None:
-            raise RuntimeError("PyYAML is required for YAML configs: pip install pyyaml")
-        with open(path, "r", encoding="utf-8") as fh:
-            data = yaml.safe_load(fh) or {}
+        data = _read_yaml(path)
+    else:
+        home = user_config_path()
+        if home.exists():
+            data = _read_yaml(str(home))
 
     cfg = Config()
     for key, value in data.items():

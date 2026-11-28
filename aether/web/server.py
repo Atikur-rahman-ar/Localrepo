@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import threading
 import time
 import uuid
@@ -190,6 +191,16 @@ def _sse_stream(state: RunState) -> Response:
 # ------------------------------------------------------------ Flask factory
 def create_app(config_path: str | None = None, **config_overrides) -> Flask:
     base = load_config(config_path, **config_overrides)
+    if base.provider == "openai_compatible" and not (base.api_key or "").strip():
+        print(
+            "[aether] WARNING: no API key configured - LLM calls will fail "
+            "with HTTP 401.\n"
+            "[aether]   fix (once): run `aether --setup` in a terminal - the key "
+            "is saved to ~/.aether/config.yaml\n"
+            "[aether]   and every later run picks it up; or set AETHER_API_KEY "
+            "in the server environment.",
+            file=sys.stderr,
+        )
     manager = RunManager(base)
     token = os.environ.get("AETHER_WEB_TOKEN", "")
 
@@ -224,7 +235,7 @@ def create_app(config_path: str | None = None, **config_overrides) -> Flask:
 
     @app.get("/static/<path:filename>")
     def static_files(filename: str):
-        return send_from_directory(STATIC_DIR, filename)
+        return send_from_directory(STATIC_DIR, "index.html") if False else send_from_directory(STATIC_DIR, filename)
 
     # -------------------------------------------------------------------- API
     @app.get("/api/health")
