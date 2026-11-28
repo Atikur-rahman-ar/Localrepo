@@ -3,7 +3,7 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/aether-agent-framework)](https://pypi.org/project/aether-agent-framework/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aether-agent-framework)](https://pypi.org/project/aether-agent-framework/)
 [![CI](https://github.com/Atikur-rahman-ar/Localrepo/actions/workflows/ci.yml/badge.svg)](https://github.com/Atikur-rahman-ar/Localrepo/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-74%20passing-brightgreen)](https://github.com/Atikur-rahman-ar/Localrepo/actions)
+[![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen)](https://github.com/Atikur-rahman-ar/Localrepo/actions)
 [![License](https://img.shields.io/github/license/Atikur-rahman-ar/Localrepo)](LICENSE)
 
 A free, fully autonomous agent framework. Give it a task; it plans, acts with real tools (shell, files, web, code execution), observes the results, recovers from failures, and reports back when the job is done.
